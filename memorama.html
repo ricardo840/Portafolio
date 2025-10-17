@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memorama de Colores</title>
+  <!-- Importamos Tailwind CSS desde CDN para usar clases de estilos rápidas -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black flex flex-col items-center min-h-screen p-6 text-white">
+
+  <!-- Título del juego -->
+  <h1 class="text-3xl font-bold mb-6">🎨 Memorama de Colores</h1>
+  
+  <!-- Contenedor donde se colocarán todas las cartas -->
+  <div id="tablero" class="grid grid-cols-4 gap-4"></div>
+  <button id="btn-reiniciar" class="hidden mt-8 px-6 py-3 bg-white text-black font-bold rounded shadow border-2 border-gray-400 hover:bg-gray-200 transition">Reiniciar juego</button>
+
+  <script>
+    // Lista de colores en pares (cada color aparece dos veces)
+    const colores = [
+      "bg-red-400", "bg-red-400",
+      "bg-blue-400", "bg-blue-400",
+      "bg-green-400", "bg-green-400",
+      "bg-yellow-400", "bg-yellow-400",
+      "bg-purple-400", "bg-purple-400",
+      "bg-pink-400", "bg-pink-400",
+      "bg-orange-400", "bg-orange-400",
+      "bg-teal-400", "bg-teal-400"
+    ];
+
+    // Función para mezclar los colores aleatoriamente (algoritmo Fisher-Yates)
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        // Intercambia las posiciones i y j
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // Referencia al tablero (div donde estarán las cartas)
+    const tablero = document.getElementById("tablero");
+    // Variables para controlar el turno
+    let primera = null; // guarda la primera carta seleccionada
+    let segunda = null; // guarda la segunda carta seleccionada
+    let bloqueo = false; // evita que se sigan volteando cartas mientras se compara
+
+    // Función para crear todas las cartas en el tablero
+    function crearTablero() {
+      // Copiamos el arreglo de colores y lo mezclamos
+      const coloresMezclados = shuffle([...colores]);
+
+      // Recorremos los colores ya mezclados y creamos un div por cada carta
+      coloresMezclados.forEach((color, index) => {
+        const carta = document.createElement("div");
+        // Cada carta inicia con color gris (oculto)
+        carta.className = "w-32 h-32 bg-gray-700 rounded cursor-pointer flex items-center justify-center";
+        // Guardamos el color real en un "data attribute" para identificarlo después
+        carta.dataset.color = color;
+        carta.dataset.index = index;
+
+        // Al hacer clic en la carta, se ejecuta la función voltearCarta
+        carta.addEventListener("click", () => voltearCarta(carta));
+
+        // Insertamos la carta en el tablero
+        tablero.appendChild(carta);
+      });
+    }
+
+    // Función para voltear una carta
+    function voltearCarta(carta) {
+      // Si hay bloqueo, si ya seleccionamos la misma carta o si ya está acertada → no hacer nada
+      if (bloqueo || carta === primera || carta.classList.contains("acertada")) return;
+
+      // Revela el color (quita gris y pone el color real)
+      carta.classList.remove("bg-gray-700");
+      carta.classList.add(carta.dataset.color);
+
+      // Si no hay primera carta seleccionada, la guardamos
+      if (!primera) {
+        primera = carta;
+      } else {
+        // Si ya había una carta, guardamos la segunda
+        segunda = carta;
+        bloqueo = true; // activamos el bloqueo hasta comparar
+
+        // Si ambas cartas tienen el mismo color
+        if (primera.dataset.color === segunda.dataset.color) {
+          // Se marcan como acertadas para que no se puedan voltear de nuevo
+          primera.classList.add("acertada");
+          segunda.classList.add("acertada");
+          resetTurno(); // reseteamos turno
+          // Verificar si todas las cartas están acertadas
+          if (document.querySelectorAll('.acertada').length === 16) {
+            mostrarBotonReinicio();
+          }
+        } else {
+          // Si son diferentes → las volteamos de nuevo después de 1 segundo
+          setTimeout(() => {
+            primera.classList.remove(primera.dataset.color);
+            primera.classList.add("bg-gray-700");
+
+            segunda.classList.remove(segunda.dataset.color);
+            segunda.classList.add("bg-gray-700");
+
+            resetTurno();
+          }, 1000);
+        }
+      }
+    }
+
+    // Función para reiniciar el turno (volver a null las variables)
+    function resetTurno() {
+      [primera, segunda] = [null, null];
+      bloqueo = false;
+    }
+
+    function mostrarBotonReinicio() {
+      document.getElementById('btn-reiniciar').classList.remove('hidden');
+    }
+
+    document.getElementById('btn-reiniciar').onclick = function() {
+      tablero.innerHTML = "";
+      this.classList.add('hidden');
+      crearTablero();
+    };
+
+    // Llamamos a la función para construir el tablero al iniciar
+    crearTablero();
+  </script>
+</body>
+</html>

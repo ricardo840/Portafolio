@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atrapa al Topo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white flex flex-col items-center justify-center min-h-screen">
+
+  <h1 class="text-3xl font-bold mb-6">🎯 Atrapa al Topo</h1>
+  <button id="btn-iniciar" class="mt-4 px-6 py-3 bg-green-500 text-white font-bold rounded shadow border-2 border-green-700 hover:bg-green-600 transition">Iniciar juego</button>
+  <p class="mb-2">Tiempo restante: <span id="temporizador" class="font-bold">60</span> s</p>
+  <p class="mb-4">Puntos: <span id="puntos">0</span></p>
+  <button id="btn-reiniciar" class="hidden mt-4 px-6 py-3 bg-white text-black font-bold rounded shadow border-2 border-gray-400 hover:bg-gray-200 transition">Reiniciar juego</button>
+
+  <!-- Tablero -->
+  <div id="tablero" class="grid grid-cols-6 gap-4">
+    <!-- Aquí se generan las 30 cajas -->
+  </div>
+
+  <script>
+// Referencias a elementos del DOM
+const tablero = document.getElementById("tablero"); // Contenedor de las cajas
+const puntosEl = document.getElementById("puntos"); // Elemento para mostrar puntos
+const tiempoEl = document.getElementById("temporizador"); // Elemento para mostrar tiempo restante
+let puntos = 0; // Puntos acumulados
+let topoActual = null; // Índice de la caja donde está el topo
+let tiempo = 60; // Tiempo inicial en segundos
+let intervaloTopo; // Intervalo para mover el topo
+let intervaloTiempo; // Intervalo para el temporizador
+
+// Crear 30 cajas dinámicamente y agregarlas al tablero
+for (let i = 1; i <= 30; i++) {
+  const caja = document.createElement("div");
+  caja.id = "caja" + i;
+  // Cada caja es un cuadrado con estilos Tailwind
+  caja.className = "w-20 h-20 bg-gray-700 rounded flex items-center justify-center";
+  // Botón que detecta el click para atrapar el topo
+  const boton = document.createElement("button");
+  boton.className = "w-full h-full rounded transition";
+  boton.addEventListener("click", () => atraparTopo(i));
+  caja.appendChild(boton);
+  tablero.appendChild(caja);
+}
+
+/**
+ * Muestra el topo en una caja aleatoria y oculta el anterior
+ */
+function mostrarTopo() {
+  // Oculta el topo anterior si existe
+  if (topoActual) {
+    document.getElementById("caja" + topoActual).firstChild.classList.remove("bg-yellow-400");
+  }
+  // Selecciona una caja aleatoria entre 1 y 30
+  const random = Math.floor(Math.random() * 30) + 1;
+  topoActual = random;
+  // Muestra el topo cambiando el color del botón
+  const topo = document.getElementById("caja" + random).firstChild;
+  topo.classList.add("bg-yellow-400");
+}
+
+/**
+ * Lógica al hacer clic en una caja
+ * Si el topo está en esa caja, suma puntos y lo oculta
+ */
+function atraparTopo(id) {
+  if (id === topoActual) {
+    puntos++;
+    puntosEl.textContent = puntos;
+    document.getElementById("caja" + id).firstChild.classList.remove("bg-yellow-400");
+    topoActual = null;
+  }
+}
+
+/**
+ * Inicia el juego: reinicia puntos, tiempo y los intervalos
+ */
+// Desactivar el juego al cargar
+let juegoActivo = false;
+document.getElementById('btn-iniciar').onclick = function() {
+  if (!juegoActivo) {
+    iniciarJuego();
+    juegoActivo = true;
+    this.disabled = true;
+    this.classList.add('opacity-50');
+  }
+};
+
+// Modificar iniciarJuego para permitir reinicio
+function iniciarJuego() {
+  puntos = 0;
+  puntosEl.textContent = puntos;
+  tiempo = 60;
+  tiempoEl.textContent = tiempo;
+  clearInterval(intervaloTopo);
+  clearInterval(intervaloTiempo);
+  // El topo salta cada 0.5 segundos
+  intervaloTopo = setInterval(mostrarTopo, 500);
+  // Temporizador de 1 minuto
+  intervaloTiempo = setInterval(() => {
+    tiempo--;
+    tiempoEl.textContent = tiempo;
+    if (tiempo <= 0) {
+      clearInterval(intervaloTopo);
+      clearInterval(intervaloTiempo);
+      if (topoActual) {
+        document.getElementById("caja" + topoActual).firstChild.classList.remove("bg-yellow-400");
+      }
+      alert("¡Tiempo terminado! Puntos: " + puntos);
+      mostrarBotonReinicio();
+      juegoActivo = false;
+      document.getElementById('btn-iniciar').disabled = false;
+      document.getElementById('btn-iniciar').classList.remove('opacity-50');
+    }
+  }, 1000);
+}
+
+/**
+ * Muestra el botón de reinicio
+ */
+function mostrarBotonReinicio() {
+  document.getElementById('btn-reiniciar').classList.remove('hidden');
+}
+
+// Reiniciar el juego al hacer clic en el botón de reinicio
+document.getElementById('btn-reiniciar').onclick = function() {
+  tablero.innerHTML = "";
+  this.classList.add('hidden');
+  // Volver a crear las 30 cajas
+  for (let i = 1; i <= 30; i++) {
+    const caja = document.createElement("div");
+    caja.id = "caja" + i;
+    caja.className = "w-20 h-20 bg-gray-700 rounded flex items-center justify-center";
+    const boton = document.createElement("button");
+    boton.className = "w-full h-full rounded transition";
+    boton.addEventListener("click", () => atraparTopo(i));
+    caja.appendChild(boton);
+    tablero.appendChild(caja);
+  }
+  iniciarJuego();
+};
+
+// Inicia el juego al cargar la página
+iniciarJuego();
+  </script>
+</body>
+</html>
